@@ -1,15 +1,11 @@
 """Metrics for measuring filter-bubble phenomena."""
 
-from __future__ import annotations
-
-from typing import Tuple
-
 import networkx as nx
 
 
 def cross_group_connectivity(
     G: nx.Graph,
-    words_per_node: Tuple[int, int],
+    words_per_node: tuple[int, int],
 ) -> float:
     """Fraction of realised cross-group edges relative to the maximum possible.
 

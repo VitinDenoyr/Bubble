@@ -1,8 +1,5 @@
 """Plotting utilities for Bubble simulations."""
 
-from __future__ import annotations
-
-from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,8 +8,8 @@ import numpy as np
 def plot_edge_counts(
     edge_counts: np.ndarray,
     *,
-    title: str = "Edges × Iteration",
-    ax: Optional[plt.Axes] = None,
+    title: str = "Edges x Iteration",
+    ax: plt.Axes | None = None,
     show: bool = True,
 ) -> plt.Axes:
     """Plot edge-count evolution across simulation steps.

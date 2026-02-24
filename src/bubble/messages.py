@@ -1,14 +1,10 @@
 """Message generation strategies for influencer content."""
 
-from __future__ import annotations
-
-from typing import Tuple
-
 import numpy as np
 
 
 def opposite_uniform_message(
-    words_per_node: Tuple[int, int],
+    words_per_node: tuple[int, int],
     label: int,
 ) -> np.ndarray:
     """Create a uniform message that spreads weight across the *opposite* group's words.
@@ -36,7 +32,7 @@ def opposite_uniform_message(
 
 
 def opposite_unique_message(
-    words_per_node: Tuple[int, int],
+    words_per_node: tuple[int, int],
     label: int,
 ) -> np.ndarray:
     """Create a message that puts all weight on a single random word from the opposite group.

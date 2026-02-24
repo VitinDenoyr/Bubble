@@ -1,13 +1,9 @@
 """Influencer selection strategies."""
 
-from __future__ import annotations
-
-from typing import List
-
 import networkx as nx
 
 
-def select_by_max_degree(G: nx.Graph, num_influencers: int) -> List[int]:
+def select_by_max_degree(G: nx.Graph, num_influencers: int) -> list[int]:
     """Select influencers by highest degree, balanced across labels.
 
     Half of the influencers are drawn from label-0 nodes and the other

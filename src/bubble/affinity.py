@@ -1,7 +1,5 @@
 """Affinity functions used to decide whether two nodes should be connected."""
 
-from __future__ import annotations
-
 import numpy as np
 from numpy.typing import ArrayLike
 

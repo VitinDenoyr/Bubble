@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple
-
 import networkx as nx
 import numpy as np
 
@@ -35,10 +33,10 @@ class BubbleModel:
     #  Construction
     # ------------------------------------------------------------------ #
 
-    def __init__(self, hp: Dict[str, Any]) -> None:
+    def __init__(self, hp: dict[str, any]) -> None:
         self.stage: int = 0
         self.num_nodes: int = hp["num_nodes"]
-        self.words_per_node: Tuple[int, int] = tuple(hp["words_per_node"])  # type: ignore[arg-type]
+        self.words_per_node: tuple[int, int] = tuple(hp["words_per_node"])  # type: ignore[arg-type]
         self.affinity_level: float = hp["affinity_level"]
         self.initial_edge_count: np.ndarray = np.zeros(4, dtype=int)
         self.edge_count: np.ndarray = np.ndarray(0)
@@ -93,8 +91,8 @@ class BubbleModel:
         )
 
         # --- Strategy callables ---------------------------------------
-        self.affinity: Callable = hp["affinity"]
-        self.influencer_selection: Callable = hp["influencer_selection"]
+        self.affinity: callable = hp["affinity"]
+        self.influencer_selection: callable = hp["influencer_selection"]
         self.num_influencers: int = hp["num_influencers"]
 
         # --- Initial edges --------------------------------------------
@@ -141,7 +139,7 @@ class BubbleModel:
         total_words = int(np.sum(self.words_per_node))
 
         # Step 1: influencer update
-        self.influencer_nodes: List[int] = self.influencer_selection(
+        self.influencer_nodes: list[int] = self.influencer_selection(
             self.G, self.num_influencers
         )
         for i in self.influencer_nodes:
