@@ -55,3 +55,44 @@ def plot_edge_counts(
         plt.show()
 
     return ax
+
+def plot_bubble_burst(
+    burst_values: np.ndarray,
+    burst_metric_name: str = "Bubble Burst Metric",
+    *,
+    title: str = "Bubble Burst x Iteration",
+    ax: Axes | None = None,
+    show: bool = True,
+) -> Axes:
+    """Plot bubble burst metric progression across simulation steps.
+
+    Parameters
+    ----------
+    burst_values : np.ndarray
+        Array of shape ``(n_steps+1)`` where each entry represents the value of the burst metric at a given iteration.
+    title : str, optional
+        Plot title.
+    ax : matplotlib.axes.Axes, optional
+        Axes to draw on; a new figure is created when *None*.
+    show : bool, optional
+        Whether to call ``plt.show()`` at the end.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+    """
+    if ax is None:
+        _, ax = plt.subplots(figsize=(10, 5))
+
+    steps = np.arange(len(burst_values))
+    ax.plot(steps, burst_values, label=f"{burst_metric_name}", color="royalblue")
+
+    ax.set_title(title)
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Metric Value")
+    ax.legend()
+
+    if show:
+        plt.show()
+
+    return ax

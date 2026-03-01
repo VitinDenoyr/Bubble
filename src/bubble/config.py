@@ -21,7 +21,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "affinity": cosine_similarity,
     "influencer_selection": select_by_max_degree,
     "num_influencers": 4,
-    "bubble_burst": cross_group_connectivity,
+    "bubble_burst_metric": cross_group_connectivity,
 }
 
 

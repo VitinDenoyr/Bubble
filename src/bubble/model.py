@@ -6,7 +6,7 @@ from typing import Any, Callable
 import networkx as nx
 import numpy as np
 
-from bubble.visualization import plot_edge_counts as _plot_edge_counts
+from bubble.visualization import plot_edge_counts as _plot_edge_counts, plot_bubble_burst as _plot_bubble_burst
 
 
 class BubbleModel:
@@ -28,6 +28,7 @@ class BubbleModel:
         - ``affinity`` (callable): ``(u, v) -> float`` affinity function.
         - ``influencer_selection`` (callable): ``(G, n) -> list[int]``.
         - ``num_influencers`` (int): Number of influencers per iteration.
+        - ``bubble_burst_metric`` (callable): ``(G, (u,v)) -> int``.
     """
 
     # ------------------------------------------------------------------ #
@@ -39,8 +40,8 @@ class BubbleModel:
         self.num_nodes: int = hp["num_nodes"]
         self.words_per_node: tuple[int, int] = tuple(hp["words_per_node"])  # type: ignore[arg-type]
         self.affinity_level: float = hp["affinity_level"]
-        self.initial_edge_count: np.ndarray = np.zeros(4, dtype=int)
-        self.edge_count: np.ndarray = np.ndarray(0)
+        self.edge_count = np.zeros((1, 4), dtype=int)
+        self.burst_metric_values = np.zeros((1), dtype=float)
 
         # --- Labels ---------------------------------------------
         if len(hp["labels"]) == self.num_nodes:
@@ -94,14 +95,13 @@ class BubbleModel:
         # --- Strategy callables ---------------------------------------
         self.affinity: Callable = hp["affinity"]
         self.influencer_selection: Callable = hp["influencer_selection"]
+        self.bubble_burst_metric = Callable = hp['bubble_burst_metric']
         self.num_influencers: int = hp["num_influencers"]
 
         # --- Initial edges --------------------------------------------
         for i in range(self.num_nodes):
             for j in range(i + 1, self.num_nodes):
                 self.update_edge(i, j)
-        self.edge_count = np.zeros((1, 4), dtype=int)
-        self.edge_count[0] = self.initial_edge_count
 
     # ------------------------------------------------------------- #
     #  Edge management
@@ -115,13 +115,13 @@ class BubbleModel:
 
         if aff >= self.affinity_level and not self.G.has_edge(node1, node2):
             self.G.add_edge(node1, node2)
-            target = self.initial_edge_count if self.stage == 0 else self.edge_count[self.stage]
+            target = self.edge_count[self.stage]
             # Maps (label1,label2) to column index of edge_count: (0,0)->0, (0,1)->1, (1,0)->2, (1,1)->3
             target[self.labels[node1] + 2 * self.labels[node2]] += 1
 
         elif aff < self.affinity_level and self.G.has_edge(node1, node2):
             self.G.remove_edge(node1, node2)
-            target = self.initial_edge_count if self.stage == 0 else self.edge_count[self.stage]
+            target = self.edge_count[self.stage]
             target[self.labels[node1] + 2 * self.labels[node2]] -= 1
 
     # ---------------------------------------------------------- #
@@ -189,12 +189,19 @@ class BubbleModel:
             The graph after all iterations.
         """
         # Initialize edge count tracking for all stages as a 2D array of shape (n+1 (time), 4 (edge type)) to store counts for each edge type at each stage
-        self.edge_count = np.zeros((n + 1, 4), dtype=int)
-        self.edge_count[0] = self.initial_edge_count
+        temp_edge_count = self.edge_count[0].copy()
+        self.edge_count = np.zeros((n+1, 4), dtype=int)
+        self.edge_count[0] = temp_edge_count
+
+        temp_burst = self.burst_metric_values[0]
+        self.burst_metric_values = np.zeros(n+1, dtype=float)
+        self.burst_metric_values[0] = temp_burst
+
         for i in range(n):
             self.stage = i + 1
+            self.edge_count[self.stage] = self.edge_count[i].copy()
             self.iteration(msg0, msg1)
-            self.edge_count[i + 1] += self.edge_count[i]
+            self.burst_metric_values[self.stage] = self.bubble_burst_metric(self.G, self.words_per_node)
         return self.G
 
     # ------------------------------------------------------------------ #
@@ -204,3 +211,7 @@ class BubbleModel:
     def plot_edge_counts(self, **kwargs) -> None:
         """Plot the edge-count evolution (delegates to :func:`bubble.visualization.plot_edge_counts`)."""
         _plot_edge_counts(self.edge_count, **kwargs)
+
+    def plot_bubble_burst(self, **kwargs) -> None:
+        """Plot the bubble burst metric progression (delegates to :func:`bubble.visualization.plot_bubble_burst`)."""
+        _plot_bubble_burst(self.burst_metric_values, **kwargs)
