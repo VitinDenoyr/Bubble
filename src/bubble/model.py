@@ -5,6 +5,7 @@ from typing import Any, Callable
 
 import networkx as nx
 import numpy as np
+from networkx.algorithms.community import modularity
 
 from bubble.visualization import plot_edge_counts as _plot_edge_counts, plot_bubble_burst as _plot_bubble_burst
 
@@ -198,10 +199,15 @@ class BubbleModel:
         self.burst_metric_values[0] = temp_burst
 
         for i in range(n):
+            # Store the initial modularity as the baseline for change calculation
+            if i == 0:
+                self.initial_modularity = modularity(self.G, [[R for R, attrs in self.G.nodes(data=True) if attrs.get("label") == 0],
+                                        [L for L, attrs in self.G.nodes(data=True) if attrs.get("label") == 1]])
+            
             self.stage = i + 1
             self.edge_count[self.stage] = self.edge_count[i].copy()
             self.iteration(msg0, msg1)
-            self.burst_metric_values[self.stage] = self.bubble_burst_metric(self.G, self.words_per_node)
+            self.burst_metric_values[self.stage] = self.bubble_burst_metric(self.G, self.words_per_node, self.initial_modularity)
         return self.G
 
     # ------------------------------------------------------------------ #

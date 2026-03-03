@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 
 from bubble.affinity import cosine_similarity
-from bubble.metrics import cross_group_connectivity
+from bubble.metrics import cross_group_connectivity, modularity_change, assortativity_change
 from bubble.selection import select_by_max_degree
 
 DEFAULT_CONFIG: dict[str, Any] = {
