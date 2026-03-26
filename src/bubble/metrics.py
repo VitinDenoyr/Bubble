@@ -1,6 +1,7 @@
 """Metrics for measuring filter-bubble phenomena."""
 
 import networkx as nx
+import math
 from networkx.algorithms.community import modularity
 
 """
@@ -19,7 +20,7 @@ from networkx.algorithms.community import modularity
 def cross_group_connectivity(
     G: nx.Graph,
     words_per_node: tuple[int, int],
-    initial_modularity: float
+    initial_metric_value: float
 ) -> float:
     """Fraction of realized cross-group edges relative to the maximum possible.
 
@@ -47,7 +48,7 @@ def cross_group_connectivity(
 def modularity_change(
     G: nx.Graph,
     words_per_node: tuple[int, int],
-    initial_modularity: float
+    initial_metric_value: float
 ) -> float:
     """Change in assortativity relative to the initial stage.
 
@@ -60,21 +61,25 @@ def modularity_change(
         Difference between the initial Modularity and the current modularity.
     """
 
+    # Safeguard to avoid division by zero
+    if G.number_of_edges() == 0:
+        return 0.0
+
     # Get the current modularity
     current_modularity = modularity(G, [[R for R, attrs in G.nodes(data=True) if attrs.get("label") == 0],
                                        [L for L, attrs in G.nodes(data=True) if attrs.get("label") == 1]])
 
     # Calculate the change in modularity
-    modularity_change =  initial_modularity - current_modularity
+    modularity_change =  initial_metric_value - current_modularity
 
     return modularity_change
 
 def assortativity_change(
     G: nx.Graph,
     words_per_node: tuple[int, int],
-    initial_modularity: float
+    initial_metric_value: float = 1.0
 ) -> float:
-    """Change in assortativity relative to the initial stage, whose value is 1.
+    """Change in assortativity relative to the initial stage.
 
     This serves as a proxy for "bubble burst": higher values indicate
     more interaction across group boundaries.
@@ -83,13 +88,17 @@ def assortativity_change(
     -------
     float
         Difference between the initial assortativity 
-        (1) and the current assortativity.
+        and the current assortativity.
     """
 
     # Get the current assortativity
     current_assortativity = nx.attribute_assortativity_coefficient(G, "label")
 
-    # Calculate the change in assortativity
-    assortativity_change = 1 - current_assortativity
+    # Safeguard for nan values
+    if math.isnan(current_assortativity):
+        current_assortativity = 1.0
 
-    return assortativity_change
+    # Calculate the change in assortativity
+    assortativity_change_value = initial_metric_value - current_assortativity
+
+    return assortativity_change_value
