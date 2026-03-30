@@ -28,7 +28,7 @@ class BubbleModel:
         - ``gamma`` (float | array-like): User susceptibility.
         - ``affinity`` (callable): ``(u, v) -> float`` affinity function.
         - ``influencer_selection`` (callable): ``(G, n) -> list[int]``.
-        - ``num_influencers`` (int): Number of influencers per iteration.
+        - ``influencer_scaling`` (callable): ``(n) -> int``.
         - ``bubble_burst_metric`` (callable): ``(G, (u,v)) -> int``.
         - ``bubble_burst_metric_name`` (string): ``Name of the bubble burst metric``.
     """
@@ -99,7 +99,8 @@ class BubbleModel:
         self.affinity: Callable = hp["affinity"]
         self.influencer_selection: Callable = hp["influencer_selection"]
         self.bubble_burst_metric: Callable = hp['bubble_burst_metric']
-        self.num_influencers: int = hp["num_influencers"]
+        self.influencer_scaling = hp['influencer_scaling']
+        self.num_influencers: int = self.influencer_scaling(self.num_nodes)
 
         # --- Initial edges --------------------------------------------
         for i in range(self.num_nodes):
