@@ -5,6 +5,7 @@ from typing import Any, Callable
 
 import networkx as nx
 import numpy as np
+from networkx.algorithms.community import modularity
 
 from bubble.visualization import plot_edge_counts as _plot_edge_counts, plot_bubble_burst as _plot_bubble_burst
 
@@ -27,8 +28,9 @@ class BubbleModel:
         - ``gamma`` (float | array-like): User susceptibility.
         - ``affinity`` (callable): ``(u, v) -> float`` affinity function.
         - ``influencer_selection`` (callable): ``(G, n) -> list[int]``.
-        - ``num_influencers`` (int): Number of influencers per iteration.
+        - ``influencer_scaling`` (callable): ``(n) -> int``.
         - ``bubble_burst_metric`` (callable): ``(G, (u,v)) -> int``.
+        - ``bubble_burst_metric_name`` (string): ``Name of the bubble burst metric``.
     """
 
     # ------------------------------------------------------------------ #
@@ -42,6 +44,7 @@ class BubbleModel:
         self.affinity_level: float = hp["affinity_level"]
         self.edge_count = np.zeros((1, 4), dtype=int)
         self.burst_metric_values = np.zeros((1), dtype=float)
+        self.burst_metric_name = hp["bubble_burst_metric_name"]
 
         # --- Labels ---------------------------------------------
         if len(hp["labels"]) == self.num_nodes:
@@ -95,8 +98,9 @@ class BubbleModel:
         # --- Strategy callables ---------------------------------------
         self.affinity: Callable = hp["affinity"]
         self.influencer_selection: Callable = hp["influencer_selection"]
-        self.bubble_burst_metric = Callable = hp['bubble_burst_metric']
-        self.num_influencers: int = hp["num_influencers"]
+        self.bubble_burst_metric: Callable = hp['bubble_burst_metric']
+        self.influencer_scaling = hp['influencer_scaling']
+        self.num_influencers: int = self.influencer_scaling(self.num_nodes)
 
         # --- Initial edges --------------------------------------------
         for i in range(self.num_nodes):
@@ -197,11 +201,30 @@ class BubbleModel:
         self.burst_metric_values = np.zeros(n+1, dtype=float)
         self.burst_metric_values[0] = temp_burst
 
+
+        # Store the initial metric as the baseline for change calculation
+        if self.burst_metric_name == 'modularity_change':
+            self.initial_metric = modularity(self.G, [[R for R, attrs in self.G.nodes(data=True) if attrs.get("label") == 0],
+                                [L for L, attrs in self.G.nodes(data=True) if attrs.get("label") == 1]])
+        elif self.burst_metric_name == 'assortativity_change':
+            try:
+                if self.G.number_of_edges() > 0:
+                    self.initial_metric = nx.attribute_assortativity_coefficient(self.G, "label")
+                else:
+                    self.initial_metric = 0.0
+            except (ZeroDivisionError, ValueError):
+                self.initial_metric = 0.0
+        elif self.burst_metric_name == 'cross_group_connectivity':
+            self.initial_metric = 0.0
+
+        self.burst_metric_values[0] = self.bubble_burst_metric(self.G, self.words_per_node, self.initial_metric)
+
         for i in range(n):
             self.stage = i + 1
             self.edge_count[self.stage] = self.edge_count[i].copy()
             self.iteration(msg0, msg1)
-            self.burst_metric_values[self.stage] = self.bubble_burst_metric(self.G, self.words_per_node)
+            self.burst_metric_values[self.stage] = self.bubble_burst_metric(self.G, self.words_per_node, self.initial_metric)
+
         return self.G
 
     # ------------------------------------------------------------------ #
