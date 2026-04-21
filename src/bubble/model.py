@@ -84,17 +84,20 @@ class BubbleModel:
             [(i, {"p": self.p[i], "label": self.labels[i]}) for i in range(self.num_nodes)]
         )
 
-        # --- Scalar / vectorized parameters ------------------
-        self.beta = (
-            np.full(self.num_nodes, hp["beta"])
-            if np.isscalar(hp["beta"])
-            else np.asarray(hp["beta"])
-        )
-        self.gamma = (
-            np.full(self.num_nodes, hp["gamma"])
-            if np.isscalar(hp["gamma"])
-            else np.asarray(hp["gamma"])
-        )
+        # --- Scalar / dual parameters ------------------
+        if np.isscalar(hp["beta"]):
+            self.beta = np.full(self.num_nodes, hp["beta"])
+        elif isinstance(hp["beta"], (list, tuple, np.ndarray)) and len(hp["beta"]) == 2:
+            self.beta = np.where(self.labels == 0, hp["beta"][0], hp["beta"][1])
+        else:
+            self.beta = np.asarray(hp["beta"])
+
+        if np.isscalar(hp["gamma"]):
+            self.gamma = np.full(self.num_nodes, hp["gamma"])
+        elif isinstance(hp["gamma"], (list, tuple, np.ndarray)) and len(hp["gamma"]) == 2:
+            self.gamma = np.where(self.labels == 0, hp["gamma"][0], hp["gamma"][1])
+        else:
+            self.gamma = np.asarray(hp["gamma"])
 
         # --- Strategy callables ---------------------------------------
         self.affinity: Callable = hp["affinity"]
